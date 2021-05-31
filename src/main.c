@@ -12,20 +12,7 @@
 #include "interface.h"
 #include "support.h"
 
-#define TAMSERP 20
-
-#define CUERPO	1
-#define CABEZA	2
-#define COLA	3
-
-#define IZQ		1
-#define DER		2
-#define ARR		3
-#define ABA		4
-
-#define CRECE	1
-#define ACHICA	2
-#define NADA	3
+extern void trazar(GtkWidget *);
 
 int main (int argc, char *argv[])
 {
@@ -50,6 +37,7 @@ int main (int argc, char *argv[])
   window = create_window ();
   gtk_widget_show (window);
 
+  g_timeout_add(20, trazar, window);
   gtk_main ();
   return 0;
 }
