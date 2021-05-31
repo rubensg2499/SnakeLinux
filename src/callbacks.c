@@ -55,6 +55,8 @@ static int cuenta = 0;
 //Prototipos de función
 void trazar(GtkWidget *);
 PEDACITOS * NuevaSerpiente(int);
+int MoverSerpiente(PEDACITOS*, int, GtkWidget *, int);
+int Colisionar(PEDACITOS*, int);
 
 void on_window_destroy(GtkObject *object, gpointer user_data){
     gtk_exit(0);
@@ -76,19 +78,37 @@ void on_acerca_de_activate(GtkMenuItem *menuitem, gpointer user_data){
 }
 
 gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
+  GtkWidget *message_dialog;
+  message_dialog = gtk_message_dialog_new (user_data, GTK_DIALOG_MODAL, 
+                                            GTK_MESSAGE_ERROR, 
+                                            GTK_BUTTONS_OK, 
+                                            "Ya se murió, F"); 
+  gtk_window_set_title(GTK_WINDOW(message_dialog), "Fin del juego");
   switch(event->keyval)
 	{
     case GDK_Right:
-			printf("Derecha\n");
+			if(!MoverSerpiente(serpiente, DER, widget, tams)){
+        gtk_dialog_run(GTK_DIALOG(message_dialog));
+        gtk_widget_destroy(message_dialog);                              
+      }
 		break;
 		case GDK_Left:
-			printf("Izquierda\n");
+			if(!MoverSerpiente(serpiente, IZQ, widget, tams)){
+        gtk_dialog_run(GTK_DIALOG(message_dialog));
+        gtk_widget_destroy(message_dialog); 
+      }
 		break;
 		case GDK_Up:
-			printf("Arriba\n");
+			if(!MoverSerpiente(serpiente, ARR, widget, tams)){
+        gtk_dialog_run(GTK_DIALOG(message_dialog));
+        gtk_widget_destroy(message_dialog); 
+      }
 		break;
 		case GDK_Down:
-			printf("Abajo\n");
+			if(!MoverSerpiente(serpiente, ABA, widget, tams)){
+        gtk_dialog_run(GTK_DIALOG(message_dialog));
+        gtk_widget_destroy(message_dialog); 
+      }
 		break;
 		default: break;
 	}
@@ -340,7 +360,73 @@ PEDACITOS * NuevaSerpiente(int tams){
 	serpiente[i].tipo = CABEZA;
 	serpiente[i].pos.x = tams;
 	serpiente[i].pos.y = 1;
-	serpiente[i].dir = ABA;
+	serpiente[i].dir = DER;
 
 	return serpiente;
+}
+
+int MoverSerpiente(PEDACITOS* serpiente, int dir, GtkWidget * widget, int tams){
+  GtkWidget *tablero = lookup_widget(widget,"drawingarea");
+  int i = 0;
+	while (serpiente[i].tipo != CABEZA) {
+		serpiente[i].dir = serpiente[i + 1].dir;
+		serpiente[i].pos = serpiente[i + 1].pos;
+		i++;
+	}
+
+  switch (serpiente[i].dir)
+	{
+	case DER:
+		if (dir != IZQ)
+			serpiente[i].dir = dir;
+		break;
+	case IZQ:
+		if (dir != DER)
+			serpiente[i].dir = dir;
+		break;
+	case ARR:
+		if (dir != ABA)
+			serpiente[i].dir = dir;
+		break;
+	case ABA:
+		if (dir != ARR)
+			serpiente[i].dir = dir;
+		break;
+	}
+
+  switch (serpiente[i].dir)
+	{
+	case DER:
+		serpiente[i].pos.x = serpiente[i].pos.x + 1;
+		if (serpiente[i].pos.x >= tablero->allocation.width / TAMSERP)
+			serpiente[i].pos.x = 0;
+		break;
+	case IZQ:
+		serpiente[i].pos.x = serpiente[i].pos.x - 1;
+		if (serpiente[i].pos.x < 0)
+			serpiente[i].pos.x = tablero->allocation.width / TAMSERP;
+		break;
+	case ARR:
+		serpiente[i].pos.y = serpiente[i].pos.y - 1;
+		if (serpiente[i].pos.y < 0)
+			serpiente[i].pos.y = tablero->allocation.height / TAMSERP;
+		break;
+	case ABA:
+		serpiente[i].pos.y = serpiente[i].pos.y + 1;
+		if (serpiente[i].pos.y > tablero->allocation.height / TAMSERP)
+			serpiente[i].pos.y = 0;
+		break;
+	}
+
+  return !Colisionar(serpiente, tams);
+}
+int Colisionar(PEDACITOS* serpiente, int tams){
+  int i = 0;
+	while (serpiente[i].tipo != CABEZA) {
+		if (serpiente[i].pos.x == serpiente[tams - 1].pos.x && serpiente[i].pos.y == serpiente[tams - 1].pos.y) {
+			return 1;
+		}
+		i++;
+	}
+	return 0;
 }
