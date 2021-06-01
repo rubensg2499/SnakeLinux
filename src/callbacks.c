@@ -48,23 +48,31 @@ COMIDA com = { {0,0}, NADA };
 GdkDrawable *pixmap = NULL;
 GdkPixmap *img = NULL;
 
-static PEDACITOS* serpiente = NULL;
 static int tams = 5;
 static int cuenta = 0;
+static PEDACITOS* serpiente = NULL;
 
 //Prototipos de función
-void trazar(GtkWidget *);
+void DibujarSerpiente(GtkWidget *);
 PEDACITOS * NuevaSerpiente(int);
 int MoverSerpiente(PEDACITOS*, int, GtkWidget *, int);
 int Colisionar(PEDACITOS*, int);
+PEDACITOS * AjustarSerpiente(PEDACITOS*, int*, int, GtkWidget *);
+int Comer(PEDACITOS*, int);
 
 void on_window_destroy(GtkObject *object, gpointer user_data){
+    free(serpiente);
     gtk_exit(0);
 }
 
 
 void on_nuevo_activate(GtkMenuItem *menuitem, gpointer user_data){
-    serpiente = NuevaSerpiente(5);
+    if(serpiente != NULL){
+      free(serpiente);
+      tams = 5;
+      cuenta = 0;
+      serpiente = NuevaSerpiente(tams);
+    }
     printf("Hola mundo\n");
 }
 
@@ -91,24 +99,40 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
         gtk_dialog_run(GTK_DIALOG(message_dialog));
         gtk_widget_destroy(message_dialog);                              
       }
+      if (Comer(serpiente, tams)) {
+					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+					com.tipo = NADA;
+			}
 		break;
 		case GDK_Left:
 			if(!MoverSerpiente(serpiente, IZQ, widget, tams)){
         gtk_dialog_run(GTK_DIALOG(message_dialog));
         gtk_widget_destroy(message_dialog); 
       }
+      if (Comer(serpiente, tams)) {
+					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+					com.tipo = NADA;
+			}
 		break;
 		case GDK_Up:
 			if(!MoverSerpiente(serpiente, ARR, widget, tams)){
         gtk_dialog_run(GTK_DIALOG(message_dialog));
         gtk_widget_destroy(message_dialog); 
       }
+      if (Comer(serpiente, tams)) {
+					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+					com.tipo = NADA;
+			}
 		break;
 		case GDK_Down:
 			if(!MoverSerpiente(serpiente, ABA, widget, tams)){
         gtk_dialog_run(GTK_DIALOG(message_dialog));
         gtk_widget_destroy(message_dialog); 
       }
+      if (Comer(serpiente, tams)) {
+					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+					com.tipo = NADA;
+			}
 		break;
 		default: break;
 	}
@@ -135,7 +159,7 @@ gboolean on_drawingarea_configure_event(GtkWidget *widget, GdkEventConfigure *ev
 							widget->allocation.width,
 							widget->allocation.height,
 							-1);
-  serpiente = NuevaSerpiente(5);
+  serpiente = NuevaSerpiente(tams);
 	DibujarSerpiente(widget);
 
 	return TRUE;
@@ -145,6 +169,7 @@ void DibujarSerpiente(GtkWidget * widget){
     GdkRectangle update_rect;
     GtkWidget *where_to_draw = lookup_widget(widget,"drawingarea");
     GdkFont *font = NULL;
+    
     int i = 1;
     if(font == NULL)
 		  font = gdk_font_load("fixed");
@@ -326,6 +351,8 @@ void DibujarSerpiente(GtkWidget * widget){
         break;
       }
     //Fin área de dibujo
+
+    MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams);
     update_rect.x = 0;
     update_rect.y = 0;
     update_rect.width = where_to_draw->allocation.width;
@@ -427,6 +454,68 @@ int Colisionar(PEDACITOS* serpiente, int tams){
 			return 1;
 		}
 		i++;
+	}
+	return 0;
+}
+
+PEDACITOS * AjustarSerpiente(PEDACITOS* serpiente, int* tams, int comida, GtkWidget* widget){
+  int i;
+	PEDACITOS cabeza = serpiente[*tams - 1];
+  GtkWidget *tablero = lookup_widget(widget,"drawingarea");
+	switch (comida)
+	{
+    case CRECE: {
+      (*tams)++;
+      
+      serpiente = (PEDACITOS *) realloc(serpiente, sizeof(PEDACITOS) * (*tams));
+      serpiente[*tams - 2].tipo = CUERPO;
+      serpiente[*tams - 1] = cabeza;
+      i = *tams - 1;
+      switch (serpiente[i].dir)
+      {
+      case DER:
+        serpiente[i].pos.x = serpiente[i].pos.x + 1;
+        if (serpiente[i].pos.x >= tablero->allocation.width / TAMSERP)
+          serpiente[i].pos.x = 0;
+        break;
+      case IZQ:
+        serpiente[i].pos.x = serpiente[i].pos.x - 1;
+        if (serpiente[i].pos.x < 0)
+          serpiente[i].pos.x = tablero->allocation.width / TAMSERP;
+        break;
+      case ARR:
+        serpiente[i].pos.y = serpiente[i].pos.y - 1;
+        if (serpiente[i].pos.y < 0)
+          serpiente[i].pos.y = tablero->allocation.height / TAMSERP;
+        break;
+      case ABA:
+        serpiente[i].pos.y = serpiente[i].pos.y + 1;
+        if (serpiente[i].pos.y > tablero->allocation.height / TAMSERP)
+          serpiente[i].pos.y = 0;
+        break;
+      }
+      break;
+    }
+    case ACHICA: {
+      if (*tams > 2) {
+        
+        i = 0;
+        while (serpiente[i].tipo != CABEZA) {
+          serpiente[i] = serpiente[i + 1];
+          i++;
+        }
+        (*tams)--;
+        serpiente = (PEDACITOS*)realloc(serpiente, sizeof(PEDACITOS) * (*tams));
+        serpiente[*tams - 1] = cabeza;
+      }
+      break;
+    }
+	}
+  return serpiente;
+}
+int Comer(PEDACITOS* serpiente, int tams){
+  if (serpiente[tams - 1].pos.x == com.pos.x && serpiente[tams - 1].pos.y == com.pos.y) {
+		return 1;
 	}
 	return 0;
 }

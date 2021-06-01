@@ -13,7 +13,6 @@
 #include "support.h"
 
 extern void DibujarSerpiente(GtkWidget *);
-
 int main (int argc, char *argv[])
 {
   GtkWidget *window;
@@ -37,7 +36,7 @@ int main (int argc, char *argv[])
   window = create_window ();
   gtk_widget_show (window);
 
-  g_timeout_add(20, DibujarSerpiente, window);
+  g_timeout_add(500, DibujarSerpiente, window);
   gtk_main ();
   return 0;
 }
