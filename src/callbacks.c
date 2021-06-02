@@ -17,6 +17,7 @@ GdkPixmap *img = NULL;
 
 static int tams = 5;
 static int cuenta = 0;
+static int muerto = FALSE;
 extern PEDACITOS* serpiente;
 
 //Prototipos de función
@@ -33,12 +34,12 @@ void on_window_destroy(GtkObject *object, gpointer user_data){
     gtk_exit(0);
 }
 
-
 void on_nuevo_activate(GtkMenuItem *menuitem, gpointer user_data){
     if(serpiente != NULL){
       free(serpiente);
       tams = 5;
       cuenta = 0;
+      muerto = FALSE;
       serpiente = NuevaSerpiente(tams);
     }
 }
@@ -47,9 +48,15 @@ void on_salir_activate(GtkMenuItem *menuitem, gpointer user_data){
     on_window_destroy((GtkObject *) menuitem, user_data);
 }
 
-
 void on_acerca_de_activate(GtkMenuItem *menuitem, gpointer user_data){
-
+  GtkWidget *message_dialog;
+  message_dialog = gtk_message_dialog_new (user_data, GTK_DIALOG_MODAL, 
+                                            GTK_MESSAGE_INFO, 
+                                            GTK_BUTTONS_OK, 
+                                            "Snake v1.0\nRubén Sánchez González.\nIngeniería en computación., 804\nUNISTMO Tehuantepec.\nSistemas de cómputo paralelos y distribuidos.\nM.C. J. Jesús Arellano Pimentel."); 
+  gtk_window_set_title(GTK_WINDOW(message_dialog), "Acerca de");
+  gtk_dialog_run(GTK_DIALOG(message_dialog));
+  gtk_widget_destroy(message_dialog);
 }
 
 gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data) {
@@ -62,54 +69,61 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
   switch(event->keyval)
 	{
     case GDK_Right:
-			if(!MoverSerpiente(serpiente, DER, widget, tams)){
-        gtk_dialog_run(GTK_DIALOG(message_dialog));
-        gtk_widget_destroy(message_dialog);                              
+			if(!muerto){
+        if(!MoverSerpiente(serpiente, DER, widget, tams)){
+          gtk_dialog_run(GTK_DIALOG(message_dialog));
+          gtk_widget_destroy(message_dialog);                              
+        }
+        if (Comer(serpiente, tams)) {
+            serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+            com.tipo = NADA;
+        }
       }
-      if (Comer(serpiente, tams)) {
-					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
-					com.tipo = NADA;
-			}
       DibujarSerpiente(widget);
 		break;
 		case GDK_Left:
-			if(!MoverSerpiente(serpiente, IZQ, widget, tams)){
-        gtk_dialog_run(GTK_DIALOG(message_dialog));
-        gtk_widget_destroy(message_dialog); 
+      if(!muerto){
+        if(!MoverSerpiente(serpiente, IZQ, widget, tams)){
+          gtk_dialog_run(GTK_DIALOG(message_dialog));
+          gtk_widget_destroy(message_dialog); 
+        }
+        if (Comer(serpiente, tams)) {
+            serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+            com.tipo = NADA;
+        }
       }
-      if (Comer(serpiente, tams)) {
-					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
-					com.tipo = NADA;
-			}
       DibujarSerpiente(widget);
 		break;
 		case GDK_Up:
-			if(!MoverSerpiente(serpiente, ARR, widget, tams)){
-        gtk_dialog_run(GTK_DIALOG(message_dialog));
-        gtk_widget_destroy(message_dialog); 
+      if(!muerto){
+        if(!MoverSerpiente(serpiente, ARR, widget, tams)){
+          gtk_dialog_run(GTK_DIALOG(message_dialog));
+          gtk_widget_destroy(message_dialog); 
+        }
+        if (Comer(serpiente, tams)) {
+            serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+            com.tipo = NADA;
+        }
       }
-      if (Comer(serpiente, tams)) {
-					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
-					com.tipo = NADA;
-			}
       DibujarSerpiente(widget);
 		break;
 		case GDK_Down:
-			if(!MoverSerpiente(serpiente, ABA, widget, tams)){
-        gtk_dialog_run(GTK_DIALOG(message_dialog));
-        gtk_widget_destroy(message_dialog); 
+      if(!muerto){
+        if(!MoverSerpiente(serpiente, ABA, widget, tams)){
+          gtk_dialog_run(GTK_DIALOG(message_dialog));
+          gtk_widget_destroy(message_dialog); 
+        }
+        if (Comer(serpiente, tams)) {
+            serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+            com.tipo = NADA;
+        }
       }
-      if (Comer(serpiente, tams)) {
-					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
-					com.tipo = NADA;
-			}
       DibujarSerpiente(widget);
 		break;
 		default: break;
 	}
   return FALSE;
 }
-
 
 gboolean on_drawingarea_expose_event (GtkWidget *widget, GdkEventExpose  *event, gpointer user_data) {
   gdk_draw_pixmap(widget->window,
@@ -120,7 +134,6 @@ gboolean on_drawingarea_expose_event (GtkWidget *widget, GdkEventExpose  *event,
 					event->area.width, event->area.height);		
 	return FALSE;
 }
-
 
 gboolean on_drawingarea_configure_event(GtkWidget *widget, GdkEventConfigure *event, gpointer user_data) {
   if(pixmap != NULL)
@@ -418,7 +431,8 @@ int Colisionar(PEDACITOS* serpiente, int tams){
   int i = 0;
 	while (serpiente[i].tipo != CABEZA) {
 		if (serpiente[i].pos.x == serpiente[tams - 1].pos.x && serpiente[i].pos.y == serpiente[tams - 1].pos.y) {
-			return 1;
+			muerto = TRUE;
+      return 1;
 		}
 		i++;
 	}
@@ -488,6 +502,10 @@ int Comer(PEDACITOS* serpiente, int tams){
 }
 
 void TrazarTablero(GtkWidget * widget){
-  MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams);
+  if(!muerto){
+    if(!MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams)){
+      
+    }
+  }
   DibujarSerpiente(widget);
 }
