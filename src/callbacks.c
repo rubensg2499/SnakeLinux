@@ -8,40 +8,7 @@
 #include "callbacks.h"
 #include "interface.h"
 #include "support.h"
-
-#define TAMSERP 20
-
-#define CUERPO	1
-#define CABEZA	2
-#define COLA	3
-
-#define IZQ		1
-#define DER		2
-#define ARR		3
-#define ABA		4
-
-#define CRECE	1
-#define ACHICA	2
-#define NADA	3
-
-struct pos {
-	int x;
-	int y;
-};
-typedef struct pos POS;
-
-struct PedacitoS {
-	POS pos;
-	int tipo;
-	int dir;
-};
-typedef struct PedacitoS PEDACITOS;
-
-struct comida {
-	POS pos;
-	int tipo;
-};
-typedef struct comida COMIDA;
+#include "Serpiente.h"
 
 COMIDA com = { {0,0}, NADA };
 
@@ -50,15 +17,16 @@ GdkPixmap *img = NULL;
 
 static int tams = 5;
 static int cuenta = 0;
-static PEDACITOS* serpiente = NULL;
+extern PEDACITOS* serpiente;
 
 //Prototipos de función
-void DibujarSerpiente(GtkWidget *);
 PEDACITOS * NuevaSerpiente(int);
+PEDACITOS * AjustarSerpiente(PEDACITOS*, int*, int, GtkWidget *);
 int MoverSerpiente(PEDACITOS*, int, GtkWidget *, int);
 int Colisionar(PEDACITOS*, int);
-PEDACITOS * AjustarSerpiente(PEDACITOS*, int*, int, GtkWidget *);
 int Comer(PEDACITOS*, int);
+void TrazarTablero(GtkWidget *);
+void DibujarSerpiente(GtkWidget *);
 
 void on_window_destroy(GtkObject *object, gpointer user_data){
     free(serpiente);
@@ -73,7 +41,6 @@ void on_nuevo_activate(GtkMenuItem *menuitem, gpointer user_data){
       cuenta = 0;
       serpiente = NuevaSerpiente(tams);
     }
-    printf("Hola mundo\n");
 }
 
 void on_salir_activate(GtkMenuItem *menuitem, gpointer user_data){
@@ -103,6 +70,7 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
 					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
 					com.tipo = NADA;
 			}
+      DibujarSerpiente(widget);
 		break;
 		case GDK_Left:
 			if(!MoverSerpiente(serpiente, IZQ, widget, tams)){
@@ -113,6 +81,7 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
 					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
 					com.tipo = NADA;
 			}
+      DibujarSerpiente(widget);
 		break;
 		case GDK_Up:
 			if(!MoverSerpiente(serpiente, ARR, widget, tams)){
@@ -123,6 +92,7 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
 					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
 					com.tipo = NADA;
 			}
+      DibujarSerpiente(widget);
 		break;
 		case GDK_Down:
 			if(!MoverSerpiente(serpiente, ABA, widget, tams)){
@@ -133,6 +103,7 @@ gboolean on_window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpoint
 					serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
 					com.tipo = NADA;
 			}
+      DibujarSerpiente(widget);
 		break;
 		default: break;
 	}
@@ -159,9 +130,7 @@ gboolean on_drawingarea_configure_event(GtkWidget *widget, GdkEventConfigure *ev
 							widget->allocation.width,
 							widget->allocation.height,
 							-1);
-  serpiente = NuevaSerpiente(tams);
-	DibujarSerpiente(widget);
-
+  DibujarSerpiente(widget);            
 	return TRUE;
 }
 
@@ -351,8 +320,6 @@ void DibujarSerpiente(GtkWidget * widget){
         break;
       }
     //Fin área de dibujo
-
-    MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams);
     update_rect.x = 0;
     update_rect.y = 0;
     update_rect.width = where_to_draw->allocation.width;
@@ -518,4 +485,9 @@ int Comer(PEDACITOS* serpiente, int tams){
 		return 1;
 	}
 	return 0;
+}
+
+void TrazarTablero(GtkWidget * widget){
+  MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams);
+  DibujarSerpiente(widget);
 }

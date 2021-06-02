@@ -11,10 +11,14 @@
 
 #include "interface.h"
 #include "support.h"
+#include "Serpiente.h"
 
+extern PEDACITOS * NuevaSerpiente(int);
 extern void DibujarSerpiente(GtkWidget *);
-int main (int argc, char *argv[])
-{
+extern void TrazarTablero(GtkWidget *);
+PEDACITOS* serpiente =  NULL;
+
+int main (int argc, char *argv[]) {
   GtkWidget *window;
 
 #ifdef ENABLE_NLS
@@ -33,10 +37,11 @@ int main (int argc, char *argv[])
    * (except popup menus), just so that you see something after building
    * the project. Delete any components that you don't want shown initially.
    */
+  serpiente = NuevaSerpiente(5);
   window = create_window ();
   gtk_widget_show (window);
 
-  g_timeout_add(500, DibujarSerpiente, window);
+  g_timeout_add(500, TrazarTablero, window);
   gtk_main ();
   return 0;
 }
