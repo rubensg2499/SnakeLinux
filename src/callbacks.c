@@ -18,6 +18,7 @@ GdkPixmap *img = NULL;
 static int tams = 5;
 static int cuenta = 0;
 static int muerto = FALSE;
+static int contador = 0;
 extern PEDACITOS* serpiente;
 
 //Prototipos de función
@@ -28,6 +29,7 @@ int Colisionar(PEDACITOS*, int);
 int Comer(PEDACITOS*, int);
 void TrazarTablero(GtkWidget *);
 void DibujarSerpiente(GtkWidget *);
+void GenerarComida(GtkWidget *);
 
 void on_window_destroy(GtkObject *object, gpointer user_data){
     free(serpiente);
@@ -332,6 +334,29 @@ void DibujarSerpiente(GtkWidget * widget){
           0, (64*360));
         break;
       }
+
+    //Dibujar comida
+    if(com.tipo == CRECE){
+      gdk_draw_rectangle(
+        pixmap,
+        widget->style->black_gc,
+        TRUE,
+        com.pos.x * TAMSERP,
+        com.pos.y * TAMSERP,
+        TAMSERP,
+        TAMSERP
+      );
+    }else if(com.tipo == ACHICA){
+      gdk_draw_arc(
+        pixmap,
+        widget->style->black_gc,
+        TRUE,
+        com.pos.x * TAMSERP,
+        com.pos.y * TAMSERP,
+        TAMSERP, TAMSERP,
+        0, (64*360)
+      );
+    }  
     //Fin área de dibujo
     update_rect.x = 0;
     update_rect.y = 0;
@@ -347,11 +372,9 @@ PEDACITOS * NuevaSerpiente(int tams){
 		tams = 2;
 	serpiente = (PEDACITOS*)malloc(sizeof(PEDACITOS) * tams);
 	if (serpiente == NULL) {
-		//essageBox(NULL, L"Sin memoria", L"Error", MB_OK | MB_ICONERROR);
 		printf("Sin memoria");
     exit(0);
 	}
-  printf("Serpiente creada con exito");
 	serpiente[0].tipo = COLA;
 	serpiente[0].pos.x = 1;
 	serpiente[0].pos.y = 1;
@@ -501,11 +524,30 @@ int Comer(PEDACITOS* serpiente, int tams){
 	return 0;
 }
 
-void TrazarTablero(GtkWidget * widget){
+void TrazarTablero(GtkWidget * widget)
   if(!muerto){
+    contador++;
+    if(contador >= 15){
+      GenerarComida(widget);
+      contador = 0;
+    }
     if(!MoverSerpiente(serpiente, serpiente[tams - 1].dir , widget, tams)){
       
     }
+    if(Comer(serpiente, tams)){
+      serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+    }
   }
   DibujarSerpiente(widget);
+}
+
+void GenerarComida(GtkWidget * widget){
+  GtkWidget *tablero = lookup_widget(widget, "drawingarea");
+  if(rand() % 100 < 80){
+    com.tipo = CRECE;
+  }else{
+    com.tipo = ACHICA;
+  }
+  com.pos.x = rand() % tablero->allocation.width / TAMSERP;
+  com.pos.x = rand() % tablero->allocation.height / TAMSERP;
 }
