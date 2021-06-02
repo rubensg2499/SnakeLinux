@@ -42,6 +42,7 @@ void on_nuevo_activate(GtkMenuItem *menuitem, gpointer user_data){
       tams = 5;
       cuenta = 0;
       muerto = FALSE;
+      contador = 0;
       serpiente = NuevaSerpiente(tams);
     }
 }
@@ -524,7 +525,7 @@ int Comer(PEDACITOS* serpiente, int tams){
 	return 0;
 }
 
-void TrazarTablero(GtkWidget * widget)
+void TrazarTablero(GtkWidget * widget){
   if(!muerto){
     contador++;
     if(contador >= 15){
@@ -536,6 +537,7 @@ void TrazarTablero(GtkWidget * widget)
     }
     if(Comer(serpiente, tams)){
       serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, widget);
+      com.tipo = NADA;
     }
   }
   DibujarSerpiente(widget);
@@ -549,5 +551,5 @@ void GenerarComida(GtkWidget * widget){
     com.tipo = ACHICA;
   }
   com.pos.x = rand() % tablero->allocation.width / TAMSERP;
-  com.pos.x = rand() % tablero->allocation.height / TAMSERP;
+  com.pos.y = rand() % tablero->allocation.height / TAMSERP;
 }
